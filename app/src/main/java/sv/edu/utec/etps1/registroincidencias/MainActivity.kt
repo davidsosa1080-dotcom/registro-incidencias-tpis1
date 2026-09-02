@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,7 +44,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BitacoraTecnicaPV() {
     var estadoInspeccion by remember { mutableStateOf("Inspección no iniciada") }
-
+    var clienteSitio by remember { mutableStateOf("") }
+    var descripcionActividad by remember { mutableStateOf("") }
     Column(
         modifier = Modifier
             .padding(24.dp),
@@ -66,6 +68,23 @@ fun BitacoraTecnicaPV() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        OutlinedTextField(
+            value = clienteSitio,
+            onValueChange = { clienteSitio = it },
+            label = { Text("Cliente / Sitio") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = descripcionActividad,
+            onValueChange = { descripcionActividad = it },
+            label = { Text("Descripción de la actividad") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(text = "Estado de la inspección:", style = MaterialTheme.typography.labelLarge)
@@ -75,7 +94,13 @@ fun BitacoraTecnicaPV() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = { estadoInspeccion = "Inspección en curso" }) {
+        Button(onClick = {
+            estadoInspeccion = if (clienteSitio.isBlank() || descripcionActividad.isBlank()) {
+                "Completa ambos campos antes de iniciar"
+            } else {
+                "Inspección en curso: $clienteSitio — $descripcionActividad"
+            }
+        }) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Iniciar bitácora de inspección")
                 Text(text = "Prototipo inicial — Unidad 1", style = MaterialTheme.typography.labelSmall)
