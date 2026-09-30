@@ -26,3 +26,9 @@ Aplicación Android para el registro de incidencias y actividades de mantenimien
 David Antonio Melgar Sosa
 Carnet: 2945322013
 Universidad Tecnológica de El Salvador — Técnicas de Producción Industrial de Software I (TPIS1)
+
+## Semana 10 — Teclado y pantalla táctil
+- Cliente/Sitio: KeyboardCapitalization.Words + ImeAction.Next (pasa al siguiente campo).
+- Descripción: KeyboardCapitalization.Sentences + ImeAction.Done (cierra el teclado).
+- Prioridad Baja/Media/Alta con Cards y Modifier.clickable; la tarjeta de estado se actualiza al tocar.
+- Corrección: el mensaje de estado ahora se deriva del estado actual y no queda desactualizado.
