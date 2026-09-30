@@ -3,7 +3,6 @@ package sv.edu.utec.etps1.registroincidencias
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -28,10 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
@@ -51,16 +55,28 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BitacoraTecnicaPV() {
-    var estadoInspeccion by remember { mutableStateOf("Inspección no iniciada") }
     var clienteSitio by remember { mutableStateOf("") }
     var descripcionActividad by remember { mutableStateOf("") }
     var prioridadSeleccionada by remember { mutableStateOf("") }
+    var inspeccionIniciada by remember { mutableStateOf(false) }
 
+    val focusManager = LocalFocusManager.current
     val prioridades = listOf("Baja", "Media", "Alta")
 
+    // El mensaje se DERIVA del estado actual en cada recomposición,
+    // así siempre coincide con lo que el usuario escribió o tocó.
+    val estadoInspeccion = when {
+        !inspeccionIniciada -> "Inspección no iniciada"
+        clienteSitio.isBlank() || descripcionActividad.isBlank() ->
+            "Completa ambos campos antes de iniciar"
+        prioridadSeleccionada.isBlank() ->
+            "Selecciona una prioridad antes de iniciar"
+        else ->
+            "Inspección en curso: $clienteSitio — $descripcionActividad (Prioridad: $prioridadSeleccionada)"
+    }
+
     Column(
-        modifier = Modifier
-            .padding(24.dp),
+        modifier = Modifier.padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -77,26 +93,37 @@ fun BitacoraTecnicaPV() {
         )
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Teclado contextual 1: nombres propios (Words) + acción "Siguiente"
         OutlinedTextField(
             value = clienteSitio,
             onValueChange = { clienteSitio = it },
             label = { Text("Cliente / Sitio") },
+            singleLine = true,
             keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
             ),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Campo con teclado contextual: capitalización de oraciones + acción "Done"
+        // Teclado contextual 2: oraciones (Sentences) + acción "Listo" que cierra el teclado
         OutlinedTextField(
             value = descripcionActividad,
             onValueChange = { descripcionActividad = it },
             label = { Text("Descripción de la actividad") },
+            singleLine = true,
             keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Sentences,
                 imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -131,7 +158,7 @@ fun BitacoraTecnicaPV() {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 12.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textAlign = TextAlign.Center,
                         fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
                         color = if (seleccionada)
                             MaterialTheme.colorScheme.onPrimary
@@ -159,18 +186,12 @@ fun BitacoraTecnicaPV() {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
-            estadoInspeccion = when {
-                clienteSitio.isBlank() || descripcionActividad.isBlank() ->
-                    "Completa ambos campos antes de iniciar"
-                prioridadSeleccionada.isBlank() ->
-                    "Selecciona una prioridad antes de iniciar"
-                else ->
-                    "Inspección en curso: $clienteSitio — $descripcionActividad (Prioridad: $prioridadSeleccionada)"
-            }
+            focusManager.clearFocus()
+            inspeccionIniciada = true
         }) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Iniciar bitácora de inspección")
-                Text(text = "Prototipo inicial — Unidad 1", style = MaterialTheme.typography.labelSmall)
+                Text(text = "Semana 10 — Teclado y táctil", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
