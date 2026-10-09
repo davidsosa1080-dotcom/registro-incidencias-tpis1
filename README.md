@@ -32,3 +32,10 @@ Universidad Tecnológica de El Salvador — Técnicas de Producción Industrial 
 - Descripción: KeyboardCapitalization.Sentences + ImeAction.Done (cierra el teclado).
 - Prioridad Baja/Media/Alta con Cards y Modifier.clickable; la tarjeta de estado se actualiza al tocar.
 - Corrección: el mensaje de estado ahora se deriva del estado actual y no queda desactualizado.
+
+## Semana 11 — Sensor acelerómetro
+- Sensor probado: acelerómetro (Sensor.TYPE_ACCELEROMETER) mediante SensorManager y SensorEventListener.
+- Uso en la app: inclinómetro para medir el ángulo de inclinación de módulos FV apoyando el teléfono sobre el panel.
+- Muestra valores X, Y, Z, inclinación en grados y un mensaje de estabilidad de la lectura.
+- Si el dispositivo no tiene acelerómetro, la app muestra "Sensor no disponible".
+- Verificación: emulador Medium Phone API 37.1, rotando el dispositivo en Extended controls → Virtual sensors (0° de rotación = 90.0°; X-Rot -70° = 20.0°).
