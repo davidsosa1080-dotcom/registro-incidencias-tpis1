@@ -25,13 +25,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -51,7 +55,7 @@ import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.sqrt
-import androidx.compose.ui.platform.LocalInspectionMode
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -201,6 +205,11 @@ fun BitacoraTecnicaPV() {
         // Semana 11: lectura del acelerómetro como inclinómetro de módulos FV
         InclinometroModuloFV()
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Semana 12: tablero de diagnóstico del dispositivo
+        DiagnosticoDispositivo()
+
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(onClick = {
@@ -209,14 +218,14 @@ fun BitacoraTecnicaPV() {
         }) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Iniciar bitácora de inspección")
-                Text(text = "Semana 11 — Sensor acelerómetro", style = MaterialTheme.typography.labelSmall)
+                Text(text = "Semana 12 — Diagnóstico del dispositivo", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
 }
 
 /**
- * Lee el acelerómetro del dispositivo y lo interpreta como inclinómetro:
+ * Semana 11. Lee el acelerómetro y lo interpreta como inclinómetro:
  * con el teléfono apoyado sobre el módulo FV, el ángulo entre el eje Z del
  * teléfono y la vertical corresponde a la inclinación del módulo.
  */
@@ -231,6 +240,7 @@ fun InclinometroModuloFV() {
         }
         return
     }
+
     val context = LocalContext.current
     val sensorManager = remember {
         context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -239,9 +249,9 @@ fun InclinometroModuloFV() {
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
     }
 
-    var x by remember { mutableStateOf(0f) }
-    var y by remember { mutableStateOf(0f) }
-    var z by remember { mutableStateOf(0f) }
+    var x by remember { mutableFloatStateOf(0f) }
+    var y by remember { mutableFloatStateOf(0f) }
+    var z by remember { mutableFloatStateOf(0f) }
     var hayLectura by remember { mutableStateOf(false) }
 
     // Registra el listener al entrar en pantalla y lo libera al salir (evita consumo de batería)
@@ -276,7 +286,6 @@ fun InclinometroModuloFV() {
             Spacer(modifier = Modifier.height(4.dp))
 
             when {
-                // Caso no disponible: el dispositivo no tiene acelerómetro
                 acelerometro == null -> {
                     Text(
                         text = "Sensor no disponible en este dispositivo. " +
@@ -285,7 +294,6 @@ fun InclinometroModuloFV() {
                     )
                 }
 
-                // Sensor existe, pero aún no llega la primera lectura
                 !hayLectura -> {
                     Text(text = "Esperando lectura del sensor…", style = MaterialTheme.typography.bodyMedium)
                 }
@@ -319,6 +327,153 @@ fun InclinometroModuloFV() {
             }
         }
     }
+}
+
+/**
+ * Semana 12. Tablero de diagnóstico del dispositivo:
+ * 1) Comprueba qué sensores existen (disponibilidad).
+ * 2) Al iniciar el diagnóstico, escucha luz y proximidad y muestra una interpretación.
+ * 3) Al detenerlo, el bloque de lecturas sale de la composición y onDispose libera los sensores.
+ */
+@Composable
+fun DiagnosticoDispositivo() {
+    if (LocalInspectionMode.current) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Diagnóstico del dispositivo: disponible solo en emulador o dispositivo",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+        return
+    }
+
+    val context = LocalContext.current
+    val sensorManager = remember {
+        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    }
+    var diagnosticoActivo by remember { mutableStateOf(false) }
+
+    // Sensores que se revisan en el tablero (tipo de Android + nombre visible)
+    val sensoresRevisados = listOf(
+        Sensor.TYPE_ACCELEROMETER to "Acelerómetro",
+        Sensor.TYPE_LIGHT to "Luz ambiental",
+        Sensor.TYPE_PROXIMITY to "Proximidad",
+        Sensor.TYPE_MAGNETIC_FIELD to "Magnetómetro",
+        Sensor.TYPE_GYROSCOPE to "Giroscopio"
+    )
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = "Diagnóstico del dispositivo",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 1) Disponibilidad: getDefaultSensor devuelve null si el sensor no existe
+            sensoresRevisados.forEach { (tipo, nombre) ->
+                val disponible = sensorManager.getDefaultSensor(tipo) != null
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = nombre, style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = if (disponible) "✔ Disponible" else "✖ No disponible",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 2) Control del ciclo: el usuario decide cuándo se escuchan los sensores
+            OutlinedButton(
+                onClick = { diagnosticoActivo = !diagnosticoActivo },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (diagnosticoActivo) "Detener diagnóstico" else "Iniciar diagnóstico")
+            }
+            Text(
+                text = if (diagnosticoActivo)
+                    "Estado: escuchando sensores de luz y proximidad"
+                else
+                    "Estado: diagnóstico detenido — sensores liberados",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            // 3) Solo mientras está activo existe el bloque que registra los listeners
+            if (diagnosticoActivo) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LecturasDiagnostico(sensorManager)
+            }
+        }
+    }
+}
+
+@Composable
+fun LecturasDiagnostico(sensorManager: SensorManager) {
+    val sensorLuz = remember { sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) }
+    val sensorProximidad = remember { sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY) }
+
+    var lux by remember { mutableFloatStateOf(-1f) }        // -1 = aún sin lectura
+    var distancia by remember { mutableFloatStateOf(-1f) }  // -1 = aún sin lectura
+
+    DisposableEffect(sensorLuz, sensorProximidad) {
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                when (event.sensor.type) {
+                    Sensor.TYPE_LIGHT -> lux = event.values[0]
+                    Sensor.TYPE_PROXIMITY -> distancia = event.values[0]
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+        sensorLuz?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
+        sensorProximidad?.let { sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI) }
+
+        // Al detener el diagnóstico (o salir de la pantalla) se liberan ambos sensores
+        onDispose { sensorManager.unregisterListener(listener) }
+    }
+
+    // Luz ambiental con interpretación orientada a la inspección de campo
+    val textoLuz = when {
+        sensorLuz == null -> "Luz ambiental: sensor no disponible en este dispositivo"
+        lux < 0f -> "Luz ambiental: esperando lectura…"
+        else -> {
+            val interpretacion = when {
+                lux < 50f -> "ambiente oscuro, use linterna para la inspección"
+                lux < 1000f -> "interior o poca luz"
+                lux < 10000f -> "exterior nublado o en sombra"
+                else -> "sol directo, condición adecuada para inspeccionar módulos FV"
+            }
+            "Luz ambiental: %.0f lx — %s".format(lux, interpretacion)
+        }
+    }
+
+    // Proximidad: valor menor al rango máximo = objeto cerca (por ejemplo, teléfono en el bolsillo)
+    val textoProximidad = when {
+        sensorProximidad == null -> "Proximidad: sensor no disponible en este dispositivo"
+        distancia < 0f -> "Proximidad: esperando lectura…"
+        distancia < sensorProximidad.maximumRange ->
+            "Proximidad: %.1f cm — objeto cercano, pantalla cubierta".format(distancia)
+        else ->
+            "Proximidad: %.1f cm — sin objetos cerca".format(distancia)
+    }
+
+    Text(text = textoLuz, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+    Spacer(modifier = Modifier.height(4.dp))
+    Text(text = textoProximidad, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
 }
 
 @Preview(showBackground = true)

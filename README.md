@@ -39,3 +39,5 @@ Universidad Tecnológica de El Salvador — Técnicas de Producción Industrial 
 - Muestra valores X, Y, Z, inclinación en grados y un mensaje de estabilidad de la lectura.
 - Si el dispositivo no tiene acelerómetro, la app muestra "Sensor no disponible".
 - Verificación: emulador Medium Phone API 37.1, rotando el dispositivo en Extended controls → Virtual sensors (0° de rotación = 90.0°; X-Rot -70° = 20.0°).
+
+- “Semana 12 — Diagnóstico del dispositivo”
