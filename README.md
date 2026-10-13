@@ -40,4 +40,8 @@ Universidad Tecnológica de El Salvador — Técnicas de Producción Industrial 
 - Si el dispositivo no tiene acelerómetro, la app muestra "Sensor no disponible".
 - Verificación: emulador Medium Phone API 37.1, rotando el dispositivo en Extended controls → Virtual sensors (0° de rotación = 90.0°; X-Rot -70° = 20.0°).
 
-- “Semana 12 — Diagnóstico del dispositivo”
+## Semana 12 — Diagnóstico del dispositivo
+- Sección "Diagnóstico del dispositivo" que verifica disponibilidad de acelerómetro, luz, proximidad, magnetómetro y giroscopio.
+- Lectura de luz ambiental (lx) y proximidad (cm) con interpretación para el técnico de campo.
+- Botón Iniciar/Detener: los sensores solo se escuchan mientras el diagnóstico está activo; onDispose los libera.
+- Verificación: emulador Medium Phone API 37.1 con Extended controls → Virtual sensors → Additional sensors.
